@@ -180,6 +180,54 @@ const BOSS_PAL = {
   Y: '#ffe14d', R: '#ff4d5e',
 };
 
+// 国王（16 x 16，胜利庆典用）
+const KING_ROWS = [
+  '................',
+  '....##..##......',
+  '...######.......',
+  '...######.......',
+  '..########......',
+  '..########......',
+  '....oooooo......',
+  '...owwwwww......',
+  '...owsowso......',
+  '...owwwwww......',
+  '..oobbbbb.......',
+  '..oobbbbb.......',
+  '...o.bbbb.......',
+  '.....bbbb.......',
+  '.....pp..pp.....',
+  '................',
+];
+const KING_PAL = {
+  '#': '#ffcd38', o: '#6b4423', w: '#f0c8a0',
+  s: '#2b2130', b: '#e8ecf4', p: '#7a4fb0',
+};
+
+// 公主（16 x 16，胜利庆典用）
+const PRINCESS_ROWS = [
+  '................',
+  '....##..##......',
+  '...######.......',
+  '...######.......',
+  '..oooooooo......',
+  '..owwwwwwo......',
+  '..owwsowwo......',
+  '..owwwwwwo......',
+  '..oooooooo......',
+  '.oooooooooo.....',
+  '..oppppppo......',
+  '..oppppppo......',
+  '..oppppppo......',
+  '.oppppppppo.....',
+  '..oooooooo......',
+  '................',
+];
+const PRINCESS_PAL = {
+  '#': '#ffcd38', o: '#4a2a18', w: '#f0c8a0',
+  s: '#2b2130', p: '#f088b0',
+};
+
 // 用 canvas 逐像素绘制精灵图，保证对齐与清晰
 function makeSprite(rows, pal, pixel) {
   const canvas = document.createElement('canvas');
@@ -234,6 +282,7 @@ const SFX = {
   loot()      { [523, 659, 784, 1046].forEach((f, i) => beep(f, .1, 'triangle', i * .07)); },
   levelup()   { [392, 523, 659, 784, 1046, 1318].forEach((f, i) => beep(f, .12, 'square', i * .09)); },
   defeat()    { [330, 392, 494, 659, 784, 988, 1318].forEach((f, i) => beep(f, .13, 'square', i * .1)); },
+  victory()   { [523, 659, 784, 1046, 784, 1046, 1318, 1568].forEach((f, i) => beep(f, .16, 'triangle', i * .12, .12)); },
 };
 
 /* ---------------- 背景音乐（8-bit 循环） ---------------- */
@@ -379,6 +428,7 @@ function defaultState() {
     boss: { stage: 1, dmg: 0, frozen: false },
     muted: false,
     bgmOn: false,
+    celebrated: false,   // 是否已举办过讨伐魔王的凯旋庆典
   };
 }
 // 旧存档字段迁移与默认值补齐（loadState 与导入存档共用）
@@ -404,6 +454,7 @@ function migrateState() {
   if (!state.boss) state.boss = { stage: 1, dmg: 0, frozen: false };
   if (!state.boss.frozen) state.boss.frozen = false;
   if (typeof state.bgmOn !== 'boolean') state.bgmOn = false;
+  if (state.celebrated !== true) state.celebrated = false;
 }
 function loadState() {
   try {
@@ -517,7 +568,10 @@ function applyBossDamage(dmg, crit) {
   if (state.boss.dmg >= cfg.maxHp) {
     r.defeated = true;
     state.boss.dmg = 0;
+    const oldStage = state.boss.stage;
     state.boss.stage++;
+    // 击败每一轮的最终魔王 → 播放凯旋庆典动画
+    if (oldStage % BOSSES.length === 0) playVictory();
   }
   return r;
 }
@@ -1569,6 +1623,123 @@ function doMakeup(ds) {
     <div class="res-sub">补签不记入具体目标的完成次数</div>`);
 }
 
+/* ---------------- 胜利庆典（讨伐魔王后） ---------------- */
+
+let victoryTimer = null, victoryOn = false;
+let _vHero = null, _vKing = null, _vPrincess = null;
+const vHero = () => _vHero || (_vHero = makeSprite(HERO_ROWS, HERO_PAL, 4));
+const vKing = () => _vKing || (_vKing = makeSprite(KING_ROWS, KING_PAL, 4));
+const vPrincess = () => _vPrincess || (_vPrincess = makeSprite(PRINCESS_ROWS, PRINCESS_PAL, 4));
+
+const VICTORY_SCENES = [
+  { title: '🏰 凯旋归来', text: '魔王已被讨伐！勇者踏上归途，重返王国的土地…', art: 'welcome' },
+  { title: '🎉 万人空巷', text: '人民夹道欢迎！鲜花与欢呼从城门一路涌向王宫。', art: 'crowd' },
+  { title: '👑 册封荣誉', text: '国王亲自走下王座，为勇者颁发「王国守护骑士」勋章！', art: 'king' },
+  { title: '💍 迎娶公主', text: '在万民的祝福声中，勇者迎娶了未婚妻——美丽的公主殿下！', art: 'wedding' },
+];
+
+function playVictory() {
+  if (victoryOn) return;
+  victoryOn = true;
+  clearInterval(victoryTimer);
+  showModal('victoryModal');
+  if (!state.muted) { ensureAudio(); SFX.victory(); }
+  let i = 0;
+  const renderScene = idx => {
+    const s = VICTORY_SCENES[idx];
+    $('victoryTitle').textContent = s.title;
+    $('victoryText').textContent = s.text;
+    buildVictoryArt(s.art);
+  };
+  renderScene(0);
+  victoryTimer = setInterval(() => {
+    i++;
+    if (i >= VICTORY_SCENES.length) {
+      clearInterval(victoryTimer);
+      victoryTimer = null;
+      finishVictory();
+      return;
+    }
+    renderScene(i);
+  }, 3600);
+}
+
+function finishVictory() {
+  if (victoryTimer) { clearInterval(victoryTimer); victoryTimer = null; }
+  victoryOn = false;
+  hideModal('victoryModal');
+  // 首次讨伐魔王：颁发荣誉勋章（传说战利品）
+  let html = '<div class="res-row">🎉 恭喜！你击败了最终魔王，王国迎来了和平！</div>';
+  if (!state.celebrated) {
+    state.celebrated = true;
+    const medal = { id: uid(), name: '勇者勋章', type: 'trophy', icon: '🎖', rarity: 'legend' };
+    collect(medal);
+    html += `<div class="res-item" style="border-color:${RARITY.legend.color}">
+      <span style="color:${RARITY.legend.color}">🎖 获得传说战利品「勇者勋章」！</span>
+      <span class="res-sub">王国守护骑士的荣耀，已放入背包</span>
+    </div>`;
+  }
+  html += '<div class="res-sub">魔王会轮回重生（血量提升），讨伐之路仍在继续…</div>';
+  saveState();
+  renderAll();
+  if (!state.muted) { ensureAudio(); SFX.levelup(); }
+  showReward('👑 圆满结局', html);
+}
+
+function buildVictoryArt(type) {
+  const stage = $('victoryStage');
+  stage.innerHTML = '';
+  const add = (cls, node) => {
+    const d = document.createElement('div');
+    d.className = cls;
+    if (node) d.appendChild(node);
+    stage.appendChild(d);
+    return d;
+  };
+  if (type === 'welcome') {
+    add('v-sun', document.createTextNode('☀'));
+    add('v-castle', document.createTextNode('🏰'));
+    const road = document.createElement('div'); road.className = 'v-road'; stage.appendChild(road);
+    add('v-hero', vHero());
+    const cs = ['#ffcd38', '#7ce38b', '#6bc7ff', '#ff8fa3'];
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'v-confetti';
+      p.style.left = (i * 8.5 + Math.random() * 5) + '%';
+      p.style.animationDelay = (Math.random() * 1.4) + 's';
+      p.style.background = cs[i % cs.length];
+      stage.appendChild(p);
+    }
+  } else if (type === 'crowd') {
+    add('v-banner', document.createTextNode('🎉🎊 欢迎英雄归来 🎊🎉'));
+    add('v-hero', vHero());
+    const colors = ['#e0514e', '#6bc7ff', '#7ce38b', '#ffcd38', '#d58cff', '#f088b0'];
+    const crowd = add('v-crowd');
+    for (let i = 0; i < 16; i++) {
+      const p = document.createElement('div');
+      p.className = 'v-person';
+      p.style.background = colors[i % colors.length];
+      p.style.animationDelay = (i % 5) * 0.12 + 's';
+      crowd.appendChild(p);
+    }
+  } else if (type === 'king') {
+    add('v-throne', document.createTextNode('👑'));
+    add('v-king', vKing());
+    add('v-hero', vHero());
+    add('v-medal', document.createTextNode('🎖️'));
+  } else if (type === 'wedding') {
+    add('v-hero', vHero());
+    add('v-princess', vPrincess());
+    for (let i = 0; i < 6; i++) {
+      const h = document.createElement('div');
+      h.className = 'v-heart';
+      h.style.left = (i * 16 + 6) + '%';
+      h.style.animationDelay = (i * 0.4) + 's';
+      stage.appendChild(h);
+    }
+  }
+}
+
 function initEvents() {
   // 日历翻页
   $('prevMonth').addEventListener('click', () => {
@@ -1652,6 +1823,8 @@ function initEvents() {
     else if (buy.dataset.placeAct) doTownAction(buy.dataset.placeAct);
   });
   $('townClose').addEventListener('click', () => hideModal('townModal'));
+  // 胜利庆典：点击画面跳过动画
+  $('victoryModal').addEventListener('click', () => { if (victoryOn) finishVictory(); });
 
   $('confirmYes').addEventListener('click', () => {
     hideModal('confirmModal');

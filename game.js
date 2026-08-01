@@ -1918,3 +1918,6 @@ initEvents();
 
 if (state.muted) $('soundToggle').textContent = '🔇 静音';
 if (state.bgmOn) $('bgmToggle').textContent = '🎵 BGM:开';
+
+// 预览彩蛋：网址加 ?demo=victory 可直接观看凯旋庆典动画
+if (location.search.indexOf('demo=victory') !== -1) setTimeout(playVictory, 600);

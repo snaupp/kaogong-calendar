@@ -183,50 +183,139 @@ const BOSS_PAL = {
 // 国王（16 x 16，胜利庆典用）
 const KING_ROWS = [
   '................',
-  '....##..##......',
-  '...######.......',
-  '...######.......',
-  '..########......',
-  '..########......',
+  '....#....#......',
+  '...###..###.....',
+  '...#########....',
+  '..###########...',
+  '..##R#####R##...',
   '....oooooo......',
   '...owwwwww......',
   '...owsowso......',
   '...owwwwww......',
-  '..oobbbbb.......',
-  '..oobbbbb.......',
-  '...o.bbbb.......',
-  '.....bbbb.......',
-  '.....pp..pp.....',
+  '..oowbbbbb......',
+  '..oowbbbbb......',
+  '...owbbbb.......',
+  '....bbbbbb......',
+  '....pp..pp......',
   '................',
 ];
 const KING_PAL = {
   '#': '#ffcd38', o: '#6b4423', w: '#f0c8a0',
-  s: '#2b2130', b: '#e8ecf4', p: '#7a4fb0',
+  s: '#2b2130', b: '#e8ecf4', p: '#7a4fb0', R: '#e0514e',
 };
 
 // 公主（16 x 16，胜利庆典用）
 const PRINCESS_ROWS = [
   '................',
-  '....##..##......',
-  '...######.......',
-  '...######.......',
-  '..oooooooo......',
-  '..owwwwwwo......',
-  '..owwsowwo......',
-  '..owwwwwwo......',
-  '..oooooooo......',
-  '.oooooooooo.....',
-  '..oppppppo......',
-  '..oppppppo......',
-  '..oppppppo......',
-  '.oppppppppo.....',
-  '..oooooooo......',
+  '....#....#......',
+  '...#########....',
+  '..oooooooooo....',
+  '..owwwwwwwwo....',
+  '..owwswswwo.....',
+  '..owwwwwwwwo....',
+  '..oooooooooo....',
+  '.oooooooooooo...',
+  '.oooppppppooo...',
+  '.ooppppppppoo...',
+  '.ooppppppppoo...',
+  '.ooppppppppoo...',
+  '..ooppppppoo....',
+  '..oooooooooo....',
   '................',
 ];
 const PRINCESS_PAL = {
   '#': '#ffcd38', o: '#4a2a18', w: '#f0c8a0',
   s: '#2b2130', p: '#f088b0',
 };
+
+// 凯旋勇者（16 x 16，披风与肩甲，胜利庆典用）
+const HERO_C_ROWS = [
+  '................',
+  '......KKKK......',
+  '.....KWWWWKR....',
+  '....KWWWWWWKR...',
+  '....KWWWWWWKR...',
+  '....KKKKKKKKR...',
+  '...KSSSSSSSSKR..',
+  '...KSWSSSWSSKR..',
+  '...KSSSSSSSWKR..',
+  '...KRRGGGRRK....',
+  '....KSSSSSSK....',
+  '....KSSKSSKK....',
+  '...KKSK.KSKK....',
+  '...KKK..KKKK....',
+  '................',
+  '................',
+];
+const HERO_C_PAL = {
+  K: '#10131f', W: '#e8ecf4', S: '#9fb0c4',
+  R: '#d04a3a', G: '#ffcd38',
+};
+
+// 王城（16 x 16，胜利庆典用）
+const CASTLE_ROWS = [
+  '...BB.....BB....',
+  '...BB.....BB....',
+  '....RR...RR.....',
+  '....RR...RR.....',
+  '....RRRRRRR.....',
+  '...RWWWWWWWR....',
+  '...RWWWWWWWR....',
+  '...RWGGGGGWR....',
+  '...RWGGGGGWR....',
+  '...RWGGGGGWR....',
+  '...RWWWWWWWR....',
+  '....WWWWWWW.....',
+  '....WWDDDWW.....',
+  '....WWDDDWW.....',
+  '.....DDDDD......',
+  '................',
+];
+const CASTLE_PAL = {
+  B: '#6bc7ff', R: '#d04a3a', W: '#c8d4e0',
+  G: '#ffd98a', D: '#1a1c2c',
+};
+
+// 国民（8 x 9，胜利庆典人群用，衣服色 T 可替换）
+const CROWD_ROWS = [
+  '........',
+  '..WWWW..',
+  '..WSWS..',
+  '..WWWW..',
+  '...TT...',
+  '..TTTT..',
+  '..TTTT..',
+  '..K..K..',
+  '........',
+];
+const CROWD_PAL = {
+  W: '#f0c8a0', S: '#2b2130', T: '#e0514e', K: '#1a1c2c',
+};
+
+// 小花（5 x 5，庆祝花瓣/装饰）
+const FLOWER_ROWS = [
+  '.....',
+  '..P..',
+  '.PWP.',
+  '..P..',
+  '.....',
+];
+const FLOWER_PAL = { P: '#f088b0', W: '#ffcd38' };
+
+// 荣誉勋章（10 x 10）
+const MEDAL_ROWS = [
+  '..........',
+  '...YYYY...',
+  '..YYYYYY..',
+  '..YYYYYY..',
+  '..YYYYYY..',
+  '...YYYY...',
+  '..RR..RR..',
+  '..RR...RR.',
+  '..........',
+  '..........',
+];
+const MEDAL_PAL = { Y: '#ffcd38', R: '#e0514e' };
 
 // 用 canvas 逐像素绘制精灵图，保证对齐与清晰
 function makeSprite(rows, pal, pixel) {
@@ -1625,11 +1714,21 @@ function doMakeup(ds) {
 
 /* ---------------- 胜利庆典（讨伐魔王后） ---------------- */
 
-let victoryTimer = null, victoryOn = false;
-let _vHero = null, _vKing = null, _vPrincess = null;
-const vHero = () => _vHero || (_vHero = makeSprite(HERO_ROWS, HERO_PAL, 4));
-const vKing = () => _vKing || (_vKing = makeSprite(KING_ROWS, KING_PAL, 4));
-const vPrincess = () => _vPrincess || (_vPrincess = makeSprite(PRINCESS_ROWS, PRINCESS_PAL, 4));
+let victoryTimer = null, victoryTypeTimer = null, victoryOn = false;
+const _sprCache = {};
+const vSpr = (rows, pal, px) => {
+  const key = rows[0] + rows.length + ':' + px + ':' + JSON.stringify(pal);
+  return _sprCache[key] || (_sprCache[key] = makeSprite(rows, pal, px));
+};
+const vHeroC = () => vSpr(HERO_C_ROWS, HERO_C_PAL, 5);
+const vKingC = () => vSpr(KING_ROWS, KING_PAL, 5);
+const vPrincessC = () => vSpr(PRINCESS_ROWS, PRINCESS_PAL, 5);
+const vCastleC = () => vSpr(CASTLE_ROWS, CASTLE_PAL, 4);
+const vMedalC = () => vSpr(MEDAL_ROWS, MEDAL_PAL, 4);
+const vFlowerC = () => vSpr(FLOWER_ROWS, FLOWER_PAL, 3);
+const _personCache = {};
+const vPersonC = color =>
+  _personCache[color] || (_personCache[color] = makeSprite(CROWD_ROWS, Object.assign({}, CROWD_PAL, { T: color }), 3));
 
 const VICTORY_SCENES = [
   { title: '🏰 凯旋归来', text: '魔王已被讨伐！勇者踏上归途，重返王国的土地…', art: 'welcome' },
@@ -1648,7 +1747,7 @@ function playVictory() {
   const renderScene = idx => {
     const s = VICTORY_SCENES[idx];
     $('victoryTitle').textContent = s.title;
-    $('victoryText').textContent = s.text;
+    typeText($('victoryText'), s.text);
     buildVictoryArt(s.art);
   };
   renderScene(0);
@@ -1661,11 +1760,24 @@ function playVictory() {
       return;
     }
     renderScene(i);
-  }, 3600);
+  }, 4000);
+}
+
+// 文字打字机效果
+function typeText(el, txt) {
+  if (victoryTypeTimer) clearInterval(victoryTypeTimer);
+  el.textContent = '';
+  let i = 0;
+  victoryTypeTimer = setInterval(() => {
+    i++;
+    el.textContent = txt.slice(0, i);
+    if (i >= txt.length) { clearInterval(victoryTypeTimer); victoryTypeTimer = null; }
+  }, 26);
 }
 
 function finishVictory() {
   if (victoryTimer) { clearInterval(victoryTimer); victoryTimer = null; }
+  if (victoryTypeTimer) { clearInterval(victoryTypeTimer); victoryTypeTimer = null; }
   victoryOn = false;
   hideModal('victoryModal');
   // 首次讨伐魔王：颁发荣誉勋章（传说战利品）
@@ -1689,6 +1801,7 @@ function finishVictory() {
 function buildVictoryArt(type) {
   const stage = $('victoryStage');
   stage.innerHTML = '';
+  stage.className = 'victory-stage v-scene-' + type;
   const add = (cls, node) => {
     const d = document.createElement('div');
     d.className = cls;
@@ -1696,47 +1809,60 @@ function buildVictoryArt(type) {
     stage.appendChild(d);
     return d;
   };
+  const addSpr = (cls, canvas, extra) => {
+    canvas.className = cls;
+    if (extra) Object.assign(canvas.style, extra);
+    stage.appendChild(canvas);
+    return canvas;
+  };
+  const gen = (cls, n, fn) => {
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div');
+      d.className = cls;
+      fn(d, i);
+      stage.appendChild(d);
+    }
+  };
+
   if (type === 'welcome') {
-    add('v-sun', document.createTextNode('☀'));
-    add('v-castle', document.createTextNode('🏰'));
+    gen('v-cloud', 3, (d, i) => { d.style.top = (6 + i * 9) + '%'; d.style.animationDelay = (i * 6) + 's'; });
+    addSpr('v-castle-spr', vCastleC());
+    const walker = add('v-walker');
+    walker.appendChild(vHeroC());
     const road = document.createElement('div'); road.className = 'v-road'; stage.appendChild(road);
-    add('v-hero', vHero());
-    const cs = ['#ffcd38', '#7ce38b', '#6bc7ff', '#ff8fa3'];
-    for (let i = 0; i < 12; i++) {
-      const p = document.createElement('div');
-      p.className = 'v-confetti';
-      p.style.left = (i * 8.5 + Math.random() * 5) + '%';
-      p.style.animationDelay = (Math.random() * 1.4) + 's';
-      p.style.background = cs[i % cs.length];
-      stage.appendChild(p);
-    }
+    gen('v-flower-fall', 8, (d, i) => { d.style.left = (i * 12 + Math.random() * 6) + '%'; d.style.animationDelay = (Math.random() * 1.6) + 's'; d.appendChild(vFlowerC()); });
+    gen('v-tuft-sm', 6, (d, i) => { d.style.left = (i * 17 + 3) + '%'; });
   } else if (type === 'crowd') {
-    add('v-banner', document.createTextNode('🎉🎊 欢迎英雄归来 🎊🎉'));
-    add('v-hero', vHero());
+    const bd = add('v-buildings');
+    gen('v-building', 4, (d, i) => { d.style.left = (i * 26 - 5) + '%'; d.style.height = (56 + (i % 3) * 28) + 'px'; bd.appendChild(d); });
+    add('v-banner', document.createTextNode('欢迎英雄归来'));
+    addSpr('v-hero-center', vHeroC());
     const colors = ['#e0514e', '#6bc7ff', '#7ce38b', '#ffcd38', '#d58cff', '#f088b0'];
-    const crowd = add('v-crowd');
-    for (let i = 0; i < 16; i++) {
-      const p = document.createElement('div');
-      p.className = 'v-person';
-      p.style.background = colors[i % colors.length];
-      p.style.animationDelay = (i % 5) * 0.12 + 's';
-      crowd.appendChild(p);
+    for (let r = 0; r < 2; r++) {
+      const row = add(r === 0 ? 'v-crowd v-crowd-back' : 'v-crowd');
+      for (let i = 0; i < 11; i++) {
+        const p = vPersonC(colors[(i + r * 3) % colors.length]);
+        p.style.animationDelay = (i % 5) * 0.14 + 's';
+        row.appendChild(p);
+      }
     }
+    gen('v-flower-fall', 8, (d, i) => { d.style.left = (i * 13) + '%'; d.style.animationDelay = (Math.random() * 1.2) + 's'; d.appendChild(vFlowerC()); });
   } else if (type === 'king') {
-    add('v-throne', document.createTextNode('👑'));
-    add('v-king', vKing());
-    add('v-hero', vHero());
-    add('v-medal', document.createTextNode('🎖️'));
+    const cols = add('v-columns');
+    gen('v-column', 3, (d, i) => { d.style.left = (8 + i * 40) + '%'; cols.appendChild(d); });
+    const dais = document.createElement('div'); dais.className = 'v-dais'; stage.appendChild(dais);
+    addSpr('v-king-c', vKingC());
+    addSpr('v-hero-kneel', vHeroC());
+    addSpr('v-medal-spr', vMedalC());
+    gen('v-sparkle', 6, (d, i) => { d.style.left = (i * 18 + 5) + '%'; d.style.animationDelay = (i * 0.25) + 's'; });
   } else if (type === 'wedding') {
-    add('v-hero', vHero());
-    add('v-princess', vPrincess());
-    for (let i = 0; i < 6; i++) {
-      const h = document.createElement('div');
-      h.className = 'v-heart';
-      h.style.left = (i * 16 + 6) + '%';
-      h.style.animationDelay = (i * 0.4) + 's';
-      stage.appendChild(h);
-    }
+    addSpr('v-hero-w', vHeroC());
+    addSpr('v-princess-w', vPrincessC());
+    const arch = add('v-arch');
+    gen('v-arch-flower', 7, (d, i) => { d.style.left = (i * 17 - 2) + '%'; d.style.top = (i % 2 === 0 ? '-4px' : '10px'); arch.appendChild(d); });
+    gen('v-heart', 6, (d, i) => { d.style.left = (i * 16 + 6) + '%'; d.style.animationDelay = (i * 0.4) + 's'; });
+    gen('v-flower-fall', 6, (d, i) => { d.style.left = (i * 16 + 3) + '%'; d.style.animationDelay = (Math.random() * 1.4) + 's'; d.appendChild(vFlowerC()); });
+    gen('v-flower-ground', 6, (d, i) => { d.style.left = (i * 16 + 4) + '%'; d.appendChild(vFlowerC()); });
   }
 }
 

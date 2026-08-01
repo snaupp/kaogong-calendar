@@ -339,6 +339,29 @@ body.zone-demon .fog {
 .miss-dot { background: #382b33; }
 .lock-dot { background: var(--panel-2); opacity: .5; }
 
+/* ---------- 补签 ---------- */
+.makeup-hint { margin-top: 9px; font-size: 10px; color: var(--gray); }
+.makeup-hint #makeupCount { color: var(--gold); }
+.makeup-tip { color: #6b738c; }
+.cal-cell.missed.can-makeup { cursor: pointer; border-style: dashed; border-color: #8a6d3b; }
+.cal-cell.missed.can-makeup:hover { background: #4a3b24; color: var(--gold); }
+
+/* ---------- 月度统计 ---------- */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat-cell {
+  background: var(--panel-2); border: 2px solid var(--panel-border);
+  padding: 9px 4px; text-align: center; display: flex; flex-direction: column; gap: 4px;
+}
+.stat-cell b { font-size: 16px; color: var(--gold); }
+.stat-cell span { font-size: 9px; color: var(--gray); }
+.stats-rank { display: flex; flex-direction: column; gap: 7px; }
+.rank-row { display: flex; align-items: center; gap: 8px; font-size: 10px; }
+.rank-name { flex-shrink: 0; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--white); }
+.rank-bar { flex: 1; height: 12px; background: var(--ink); border: 2px solid var(--panel-border); box-shadow: inset 0 0 0 1px #0d0f1a; }
+.rank-bar i { display: block; height: 100%; background: linear-gradient(180deg, #9fffb0, #4cc95f); }
+.rank-num { color: var(--gold); flex-shrink: 0; }
+.stats-empty { font-size: 10px; color: var(--gray); text-align: center; padding: 10px 0; }
+
 /* ---------- 魔王面板 ---------- */
 .boss-row { display: flex; gap: 14px; align-items: center; }
 .sprite-wrap { flex-shrink: 0; line-height: 0; }

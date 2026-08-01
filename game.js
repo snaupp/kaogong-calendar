@@ -66,6 +66,7 @@ const SHOP_ITEMS = [
   { id: 'potion_mp',   name: '蓝药水',   icon: '🧪', price: 20, desc: '回复 40 点蓝量',            type: 'consumable', mp: 40 },
   { id: 'potion_full', name: '仙露',     icon: '✨', price: 45, desc: '回复 80 点生命和蓝量',      type: 'consumable', hp: 80, mp: 80 },
   { id: 'attacks',     name: '攻击次数包', icon: '🗡', price: 30, desc: '立即获得 3 次攻击次数' },
+  { id: 'makeup',      name: '补签卡',   icon: '📋', price: 80, desc: '补签 1 天漏掉的打卡，恢复连续记录' },
   { id: 'skill_scroll',name: '随机技能书', icon: '📖', price: 80, desc: '学会一个随机技能' },
   { id: 'equip_box',   name: '装备箱',   icon: '🎁', price: 50, desc: '随机掉落一件装备' },
 ];
@@ -370,7 +371,7 @@ function defaultState() {
     battleLog: [],              // 讨伐战报（最近攻击记录）
     player: {
       level: 1, exp: 0, gold: 0, attacks: 0,
-      hp: 100, mp: 30, down: false,
+      hp: 100, mp: 30, down: false, makeup: 0,
       skills: [],
       equip: { weapon: null, armor: null, accessory: null },
       inventory: [],
@@ -380,27 +381,36 @@ function defaultState() {
     bgmOn: false,
   };
 }
+// 旧存档字段迁移与默认值补齐（loadState 与导入存档共用）
+function migrateState() {
+  // 兼容旧存档：单日单条打卡 → 单日多条数组
+  Object.keys(state.checkIns || {}).forEach(k => {
+    if (state.checkIns[k] && !Array.isArray(state.checkIns[k])) {
+      state.checkIns[k] = [state.checkIns[k]];
+    }
+  });
+  if (!state.signIns) state.signIns = {};
+  if (!state.claimedMilestones) state.claimedMilestones = [];
+  if (!state.battleLog) state.battleLog = [];
+  if (!state.player) state.player = {};
+  if (!state.player.equip) state.player.equip = { weapon: null, armor: null, accessory: null };
+  if (!state.player.inventory) state.player.inventory = [];
+  if (typeof state.player.attacks !== 'number') state.player.attacks = 0;
+  if (typeof state.player.hp !== 'number') state.player.hp = playerHp();
+  if (typeof state.player.mp !== 'number') state.player.mp = playerMaxMp();
+  if (!state.player.down) state.player.down = false;
+  if (!state.player.skills) state.player.skills = [];
+  if (typeof state.player.makeup !== 'number') state.player.makeup = 0;   // 补签卡数量
+  if (!state.boss) state.boss = { stage: 1, dmg: 0, frozen: false };
+  if (!state.boss.frozen) state.boss.frozen = false;
+  if (typeof state.bgmOn !== 'boolean') state.bgmOn = false;
+}
 function loadState() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
       state = JSON.parse(raw);
-      // 兼容旧存档：单日单条打卡 → 单日多条数组
-      Object.keys(state.checkIns || {}).forEach(k => {
-        if (state.checkIns[k] && !Array.isArray(state.checkIns[k])) {
-          state.checkIns[k] = [state.checkIns[k]];
-        }
-      });
-      if (!state.signIns) state.signIns = {};
-      if (!state.claimedMilestones) state.claimedMilestones = [];
-      if (!state.battleLog) state.battleLog = [];
-      if (typeof state.player.attacks !== 'number') state.player.attacks = 0;
-      if (typeof state.player.hp !== 'number') state.player.hp = playerHp();
-      if (typeof state.player.mp !== 'number') state.player.mp = playerMaxMp();
-      if (!state.player.down) state.player.down = false;
-      if (!state.player.skills) state.player.skills = [];
-      if (!state.boss.frozen) state.boss.frozen = false;
-      if (typeof state.bgmOn !== 'boolean') state.bgmOn = false;
+      migrateState();
       return;
     }
   } catch (e) { /* 存档损坏则重建 */ }
@@ -409,6 +419,42 @@ function loadState() {
 }
 function saveState() {
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* 忽略 */ }
+}
+
+/* ---------------- 存档导出 / 导入 ---------------- */
+
+function exportSave() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rpg-save-${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  SFX.click();
+  floatText('存档已导出 📤', $('pGold'));
+}
+function importSave(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed || typeof parsed !== 'object' || !parsed.goals || !parsed.checkIns || !parsed.player || !parsed.boss) {
+        throw new Error('格式不正确');
+      }
+      state = parsed;
+      migrateState();
+      saveState();
+      renderAll();
+      SFX.loot();
+      showReward('📥 导入成功！', `<div class="res-row">存档已恢复：LV ${state.player.level} · 🪙 ${state.player.gold} · 总打卡 ${totalCheckIns()} 天</div>`);
+    } catch (e) {
+      askConfirm('导入失败：文件内容不是有效的存档数据。\n请选择之前导出的 JSON 备份文件。', () => {});
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ---------------- 日期工具 ---------------- */
@@ -909,6 +955,7 @@ function floatText(text, anchor) {
 
 function renderAll() {
   renderCalendar();
+  renderStats();
   renderPlayer();
   renderBoss();
   updateScene();
@@ -946,16 +993,18 @@ function renderCalendar() {
     const recs = dateRecords(ds);
     const checked = recs.length > 0;
     let cls = 'cal-cell';
+    let canMakeup = false;
     if (checked) cls += ' done';
-    else if (ds < today) cls += ' missed';
+    else if (ds < today) { cls += ' missed'; canMakeup = state.player.makeup > 0; }
     else if (ds > today) cls += ' locked';
     else cls += ' today';
+    if (canMakeup) cls += ' can-makeup';
 
     let tip = '';
     if (checked) {
       const names = recs.map(r => {
         const g = state.goals.find(x => x.id === r.goalId);
-        return g ? g.name : '未知目标';
+        return r.goalId === 'makeup' ? '补签' : (g ? g.name : '未知目标');
       });
       tip = `完成：${names.join('、')}`;
     } else if (ds === today) {
@@ -963,14 +1012,72 @@ function renderCalendar() {
     } else if (ds > today) {
       tip = '尚未到来';
     } else {
-      tip = '漏打卡了…';
+      tip = state.player.makeup > 0 ? '漏打卡了…点击补签' : '漏打卡了…';
     }
-    let cell = `<div class="${cls}" title="${tip}">${d}`;
+    let cell = `<div class="${cls}" data-ds="${ds}" title="${tip}">${d}`;
     if (checked && streakUntil(ds) >= 2) cell += '<i class="flame-mark">🔥</i>';
     cell += '</div>';
     cells.push(cell);
   }
   $('calGrid').innerHTML = cells.join('');
+  $('makeupCount').textContent = state.player.makeup;
+}
+
+/* ----- 月度统计 ----- */
+function renderStats() {
+  const el = $('statsContent');
+  if (!el) return;
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const today = todayStr();
+  // 已过去天数（当月取到今天，过去月份取全月）
+  const now = new Date();
+  let elapsed = daysInMonth;
+  if (calYear === now.getFullYear() && calMonth === now.getMonth()) {
+    elapsed = now.getDate();
+  } else if (calYear > now.getFullYear() || (calYear === now.getFullYear() && calMonth > now.getMonth())) {
+    elapsed = 0; // 未来月份
+  }
+  // 统计本月的打卡天数与次数
+  let checkedDays = 0, totalTimes = 0, signDays = 0;
+  const goalCounts = {};
+  state.goals.forEach(g => { goalCounts[g.id] = 0; });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${calYear}-${pad(calMonth + 1)}-${pad(d)}`;
+    const recs = dateRecords(ds);
+    if (recs.length) {
+      checkedDays++;
+      totalTimes += recs.length;
+      recs.forEach(r => { if (r.goalId !== 'makeup' && goalCounts[r.goalId] !== undefined) goalCounts[r.goalId]++; });
+    }
+    if (state.signIns[ds]) signDays++;
+  }
+  const rate = elapsed > 0 ? Math.round(checkedDays / elapsed * 100) : 0;
+  // 目标完成排行（本月，取前 5）
+  const ranking = Object.keys(goalCounts)
+    .map(id => ({ name: (state.goals.find(g => g.id === id) || {}).name || '未知', count: goalCounts[id] }))
+    .filter(x => x.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const maxRank = ranking.length ? ranking[0].count : 1;
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-cell"><b>${checkedDays}</b><span>打卡天数</span></div>
+      <div class="stat-cell"><b>${totalTimes}</b><span>完成次数</span></div>
+      <div class="stat-cell"><b>${rate}%</b><span>本月打卡率</span></div>
+      <div class="stat-cell"><b>${signDays}</b><span>签到天数</span></div>
+    </div>`;
+  if (ranking.length) {
+    html += '<div class="stats-rank">' + ranking.map(x => `
+      <div class="rank-row">
+        <span class="rank-name">${x.name}</span>
+        <span class="rank-bar"><i style="width:${Math.max(6, Math.round(x.count / maxRank * 100))}%"></i></span>
+        <span class="rank-num">×${x.count}</span>
+      </div>`).join('') + '</div>';
+  } else {
+    html += '<div class="stats-empty">本月还没有打卡记录，加油讨伐魔王吧！</div>';
+  }
+  el.innerHTML = html;
 }
 
 /* ----- 勇者面板 ----- */
@@ -1252,6 +1359,9 @@ function buyShop(id) {
   } else if (id === 'attacks') {
     state.player.attacks += 3;
     msg = '攻击次数 +3';
+  } else if (id === 'makeup') {
+    state.player.makeup++;
+    msg = '补签卡 +1（点击日历上漏掉的日期即可补签）';
   } else if (id === 'skill_scroll') {
     const def = randomSkillItem();
     const r = learnSkill(def);
@@ -1439,17 +1549,62 @@ function doReset() {
   renderAll();
 }
 
+// 补签：用 1 张补签卡补上过去某一天，恢复连续打卡并发放少量奖励
+function doMakeup(ds) {
+  if (state.player.makeup <= 0) return;
+  if (dateRecords(ds).length) return;
+  state.player.makeup--;
+  if (!state.checkIns[ds]) state.checkIns[ds] = [];
+  state.checkIns[ds].push({ goalId: 'makeup', ts: Date.now() });
+  const exp = 20;
+  state.player.gold += 10;
+  gainExp(exp);
+  saveState();
+  renderAll();
+  if (!state.muted) { ensureAudio(); SFX.checkin(); }
+  floatText('补签成功 +20 EXP', $('calTitle'));
+  showReward('📋 补签成功！', `<div class="res-row">已补签 <b>${ds}</b>，连续打卡记录已恢复。</div>
+    <div class="res-row res-exp">+${exp} 经验</div>
+    <div class="res-row">+10 金币</div>
+    <div class="res-sub">补签不记入具体目标的完成次数</div>`);
+}
+
 function initEvents() {
   // 日历翻页
   $('prevMonth').addEventListener('click', () => {
     calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
     renderCalendar();
+    renderStats();
     SFX.click();
   });
   $('nextMonth').addEventListener('click', () => {
     calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
     renderCalendar();
+    renderStats();
     SFX.click();
+  });
+
+  // 日历点击：漏掉的日期可补签
+  $('calGrid').addEventListener('click', e => {
+    const cell = e.target.closest('.cal-cell[data-ds]');
+    if (!cell) return;
+    const ds = cell.dataset.ds;
+    const today = todayStr();
+    if (dateRecords(ds).length || ds >= today) return;
+    if (state.player.makeup <= 0) {
+      askConfirm('漏掉的日期可以用补签卡补签，恢复连续打卡。\n补签卡可在商店购买（80 金币）。', () => {});
+      return;
+    }
+    askConfirm(`使用 1 张补签卡补签 ${ds}？\n\n补签后该日计入连续打卡，并获得少量经验与金币。`, () => { ensureAudio(); doMakeup(ds); });
+  });
+
+  // 存档导出 / 导入
+  $('exportBtn').addEventListener('click', () => { ensureAudio(); exportSave(); });
+  $('importBtn').addEventListener('click', () => { $('importFile').click(); });
+  $('importFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importSave(f);
+    e.target.value = '';
   });
 
   // 目标添加 / 删除

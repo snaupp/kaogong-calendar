@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#151725">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>勇者修行 · 考公讨伐魔王</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,6 +44,12 @@
           <span class="lg"><i class="dot miss-dot"></i>漏打卡</span>
           <span class="lg"><i class="dot lock-dot"></i>未到</span>
         </div>
+        <div class="makeup-hint">📋 补签卡 × <span id="makeupCount">0</span><span class="makeup-tip"> · 点击漏掉的日期可补签</span></div>
+      </section>
+
+      <section class="panel stats-panel">
+        <div class="panel-title">📊 本月战绩</div>
+        <div id="statsContent" class="stats-content"></div>
       </section>
 
       <section class="panel signin-panel">
@@ -166,12 +175,15 @@
   </main>
 
   <footer class="footer">
-    <span>💾 数据保存在本地浏览器</span>
+    <span>💾 数据保存在本地浏览器，建议定期导出备份</span>
     <span class="footer-btns">
+      <button id="exportBtn" class="pixel-btn small">📤 导出存档</button>
+      <button id="importBtn" class="pixel-btn small">📥 导入存档</button>
       <button id="bgmToggle" class="pixel-btn small">🎵 BGM:关</button>
       <button id="soundToggle" class="pixel-btn small">🔊 音效</button>
       <button id="resetBtn" class="pixel-btn small red">🗑 重置存档</button>
     </span>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
   </footer>
 </div>
 
@@ -206,5 +218,13 @@
 </div>
 
 <script src="game.js"></script>
+<script>
+  // 注册 Service Worker：离线可用 + 可安装为应用
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+</script>
 </body>
 </html>

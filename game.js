@@ -1802,6 +1802,9 @@ function buildVictoryArt(type) {
   const stage = $('victoryStage');
   stage.innerHTML = '';
   stage.className = 'victory-stage v-scene-' + type;
+  stage.style.opacity = 0;
+  void stage.offsetWidth;   // 强制重排以触发淡入
+  stage.style.opacity = 1;
   const add = (cls, node) => {
     const d = document.createElement('div');
     d.className = cls;

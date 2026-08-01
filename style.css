@@ -234,7 +234,7 @@ body.zone-demon .fog {
   50% { opacity: .9; }
 }
 
-#app { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 18px 14px 30px; }
+#app { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 18px 14px 30px; }
 
 /* ---------- 标题 ---------- */
 .title-bar { text-align: center; margin-bottom: 18px; }
@@ -251,12 +251,12 @@ body.zone-demon .fog {
 
 /* ---------- 布局 ---------- */
 .layout {
-  display: grid; grid-template-columns: 1fr 400px; gap: 16px; align-items: start;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start;
 }
-@media (max-width: 920px) {
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+@media (max-width: 1000px) {
   .layout { grid-template-columns: 1fr; }
 }
-.side { display: flex; flex-direction: column; gap: 16px; }
 
 /* ---------- 面板 ---------- */
 .panel {

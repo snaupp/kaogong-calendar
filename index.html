@@ -21,30 +21,48 @@
 
   <main class="layout">
 
-    <!-- ============ 左列：打卡日历 ============ -->
-    <section class="panel calendar-panel">
-      <div class="panel-title">🗓 修行日历</div>
-      <div class="cal-head">
-        <button id="prevMonth" class="pixel-btn small square">◀</button>
-        <span id="calTitle" class="cal-title">2026年 8月</span>
-        <button id="nextMonth" class="pixel-btn small square">▶</button>
-      </div>
-      <div class="cal-week">
-        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div class="legend">
-        <span class="lg"><i class="dot done-dot"></i>已完成</span>
-        <span class="lg"><i class="dot today-dot"></i>今天</span>
-        <span class="lg"><i class="dot miss-dot"></i>漏打卡</span>
-        <span class="lg"><i class="dot lock-dot"></i>未到</span>
-      </div>
-    </section>
+    <!-- ============ 左列：日历与每日任务 ============ -->
+    <div class="col">
 
-    <!-- ============ 右列 ============ -->
-    <aside class="side">
+      <section class="panel calendar-panel">
+        <div class="panel-title">🗓 修行日历</div>
+        <div class="cal-head">
+          <button id="prevMonth" class="pixel-btn small square">◀</button>
+          <span id="calTitle" class="cal-title">2026年 8月</span>
+          <button id="nextMonth" class="pixel-btn small square">▶</button>
+        </div>
+        <div class="cal-week">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="legend">
+          <span class="lg"><i class="dot done-dot"></i>已完成</span>
+          <span class="lg"><i class="dot today-dot"></i>今天</span>
+          <span class="lg"><i class="dot miss-dot"></i>漏打卡</span>
+          <span class="lg"><i class="dot lock-dot"></i>未到</span>
+        </div>
+      </section>
 
-      <!-- 魔王面板 -->
+      <section class="panel signin-panel">
+        <div class="panel-title">📆 每日签到</div>
+        <div class="signin-cycle" id="signinCycle"></div>
+        <div id="signinState" class="today-state"></div>
+        <button id="signinBtn" class="pixel-btn big gold">✍️ 今日签到</button>
+        <div class="checkin-tip">连续签到第 7 天有史诗大奖！签到可获得攻击次数，中断则重新从第 1 天开始</div>
+      </section>
+
+      <section class="panel checkin-panel">
+        <div class="panel-title">⚔ 今日目标</div>
+        <div id="todayGoalList"></div>
+        <div id="todayGoalHint" class="today-hint"></div>
+        <div class="checkin-tip">每个目标当天可打卡一次，打卡可获得攻击次数，用来手动攻击魔王</div>
+      </section>
+
+    </div>
+
+    <!-- ============ 中列：战斗与勇者 ============ -->
+    <div class="col">
+
       <section class="panel boss-panel">
         <div class="panel-title">👹 讨伐目标</div>
         <div class="boss-row">
@@ -65,7 +83,6 @@
         <div class="battle-log" id="battleLog"></div>
       </section>
 
-      <!-- 勇者状态 -->
       <section class="panel player-panel">
         <div class="panel-title">🧙 勇者状态</div>
         <div class="player-row">
@@ -99,31 +116,17 @@
         </div>
       </section>
 
-      <!-- 勇者技能 -->
       <section class="panel skill-panel">
         <div class="panel-title">📖 勇者技能</div>
         <div id="skillList" class="skill-grid"></div>
         <div class="checkin-tip">技能消耗 1 次攻击 + 蓝量；蓝量可通过打卡、签到、药水、澡堂恢复</div>
       </section>
 
-      <!-- 每日签到 -->
-      <section class="panel signin-panel">
-        <div class="panel-title">📆 每日签到</div>
-        <div class="signin-cycle" id="signinCycle"></div>
-        <div id="signinState" class="today-state"></div>
-        <button id="signinBtn" class="pixel-btn big gold">✍️ 今日签到</button>
-        <div class="checkin-tip">连续签到第 7 天有史诗大奖！签到可获得攻击次数，中断则重新从第 1 天开始</div>
-      </section>
+    </div>
 
-      <!-- 今日目标 -->
-      <section class="panel checkin-panel">
-        <div class="panel-title">⚔ 今日目标</div>
-        <div id="todayGoalList"></div>
-        <div id="todayGoalHint" class="today-hint"></div>
-        <div class="checkin-tip">每个目标当天可打卡一次，打卡可获得攻击次数，用来手动攻击魔王</div>
-      </section>
+    <!-- ============ 右列：养成与设施 ============ -->
+    <div class="col">
 
-      <!-- 目标管理 -->
       <section class="panel goal-panel">
         <div class="panel-title">📜 目标清单</div>
         <div class="goal-add-row">
@@ -133,7 +136,6 @@
         <ul id="goalList"></ul>
       </section>
 
-      <!-- 城镇设施 -->
       <section class="panel town-panel" id="townPanel">
         <div class="panel-title">🌆 城镇设施</div>
         <div class="town-grid">
@@ -144,7 +146,6 @@
         </div>
       </section>
 
-      <!-- 背包与装备 -->
       <section class="panel inv-panel">
         <div class="panel-title">🎒 背包与装备</div>
         <div class="equip-row">
@@ -156,12 +157,12 @@
         <div class="inv-grid" id="invGrid"></div>
       </section>
 
-      <!-- 勇者语录 -->
       <section class="panel tip-panel">
         <div id="dailyTip" class="daily-tip">坚持 21 天，习惯自成。</div>
       </section>
 
-    </aside>
+    </div>
+
   </main>
 
   <footer class="footer">
